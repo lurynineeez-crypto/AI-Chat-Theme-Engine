@@ -130,17 +130,24 @@ const viewport = document.querySelector("#message-viewport");
 const composer = document.querySelector("#composer");
 const input = document.querySelector("#message-input");
 const sendButton = document.querySelector("#send-button");
-const composerStatus = document.querySelector("#composer-status");
+const statusLiveRegion = document.querySelector("#host-status-live-region");
 const demoState = document.querySelector("#demo-state");
 const appearanceToggle = document.querySelector("#appearance-toggle");
 const openDrawerButton = document.querySelector("#open-drawer");
 const drawer = document.querySelector("#mobile-drawer");
 const backdrop = document.querySelector("#drawer-backdrop");
 const devHarness = document.querySelector("#dev-harness");
-const devMode = new URLSearchParams(window.location.search).get("dev") === "1";
+const queryParams = new URLSearchParams(window.location.search);
+const devMode = queryParams.get("dev") === "1";
+const decorationFixture = devMode ? queryParams.get("decorations") : null;
+const allowedDecorationFixtures = new Set(["bubble-inside", "bubble-outside", "avatar-outside"]);
 
 if (devMode) {
   devHarness.hidden = false;
+}
+
+if (allowedDecorationFixtures.has(decorationFixture)) {
+  app.dataset.validationDecoration = decorationFixture;
 }
 
 const activeConversation = () =>
@@ -156,18 +163,22 @@ const escapeHtml = (value) =>
 
 function sidebarMarkup(isDrawer) {
   return `
-    <div
-      class="theme-anchor"
-      data-theme-hook="sidebar-decoration"
-      aria-hidden="true"
-    ></div>
     <div class="brand-area" data-component="brand-area" data-theme-hook="brand-area">
-      <div
-        class="theme-anchor"
-        data-theme-hook="brand-decoration"
-        aria-hidden="true"
-      ></div>
-      <div class="brand-content">
+      <div class="decoration-boundary decoration-boundary--outside" aria-hidden="true">
+        <div
+          class="decoration-slot"
+          aria-hidden="true"
+          data-theme-hook="brand-decoration-outside"
+        ></div>
+      </div>
+      <div class="decoration-boundary decoration-boundary--inside" aria-hidden="true">
+        <div
+          class="decoration-slot"
+          aria-hidden="true"
+          data-theme-hook="brand-decoration-inside"
+        ></div>
+      </div>
+      <div class="brand-content content-layer">
         <div class="brand-mark" aria-hidden="true">AI</div>
         <div>
           <p class="brand-name">Host UI</p>
@@ -218,7 +229,14 @@ function sidebarMarkup(isDrawer) {
       data-component="account-settings-area"
       data-theme-hook="account-settings-area"
     >
-      <button class="settings-button" type="button">
+      <button
+        class="settings-button"
+        type="button"
+        aria-label="Account and settings unavailable"
+        title="Unavailable in the structural prototype"
+        aria-disabled="true"
+        disabled
+      >
         <span aria-hidden="true">○</span>
         <span>Account and settings</span>
       </button>
@@ -327,7 +345,7 @@ function selectConversation(id) {
 function statePanelMarkup(type) {
   if (type === "loading") {
     return `
-      <div class="state-panel loading-state" data-component="loading-state" role="status">
+      <div class="state-panel loading-state" data-component="loading-state">
         <div class="state-marker" aria-hidden="true">…</div>
         <h2>Loading conversation</h2>
         <p>Local fixture: content is temporarily being prepared.</p>
@@ -358,17 +376,33 @@ function statePanelMarkup(type) {
 
   return `
     <div
-      class="state-panel empty-state"
+      class="state-panel empty-state decorated-component"
       data-component="empty-state"
       data-theme-hook="empty-state"
     >
-      <div
-        class="empty-state-slot"
-        data-theme-hook="empty-state-decoration"
-        aria-hidden="true"
-      ></div>
-      <h2>Start a local conversation</h2>
-      <p>Messages sent here stay in memory for this page session and are not persisted.</p>
+      <div class="decoration-boundary decoration-boundary--outside" aria-hidden="true">
+        <div
+          class="decoration-slot"
+          aria-hidden="true"
+          data-theme-hook="empty-state-decoration-outside"
+        ></div>
+      </div>
+      <div class="decoration-boundary decoration-boundary--inside" aria-hidden="true">
+        <div
+          class="decoration-slot"
+          aria-hidden="true"
+          data-theme-hook="empty-state-decoration-inside"
+        ></div>
+      </div>
+      <div class="content-layer content-layer--state">
+        <div
+          class="empty-state-slot"
+          data-theme-hook="empty-state-illustration"
+          aria-hidden="true"
+        ></div>
+        <h2>Start a local conversation</h2>
+        <p>Messages sent here stay in memory for this page session and are not persisted.</p>
+      </div>
     </div>
   `;
 }
@@ -388,12 +422,21 @@ function messageMarkup(message) {
         data-theme-hook="avatar-frame"
         aria-label="${incoming ? "Host" : "You"}"
       >
-        <div
-          class="theme-anchor"
-          data-theme-hook="avatar-frame-decoration"
-          aria-hidden="true"
-        ></div>
-        <span aria-hidden="true">${incoming ? "AI" : "You"}</span>
+        <div class="decoration-boundary decoration-boundary--outside" aria-hidden="true">
+          <div
+            class="decoration-slot"
+            aria-hidden="true"
+            data-theme-hook="avatar-frame-decoration-outside"
+          ></div>
+        </div>
+        <div class="decoration-boundary decoration-boundary--inside" aria-hidden="true">
+          <div
+            class="decoration-slot"
+            aria-hidden="true"
+            data-theme-hook="avatar-frame-decoration-inside"
+          ></div>
+        </div>
+        <span class="content-layer content-layer--avatar" aria-hidden="true">${incoming ? "AI" : "You"}</span>
       </div>
       <div class="message-body">
         <div
@@ -401,12 +444,23 @@ function messageMarkup(message) {
           data-component="${direction}-message"
           data-theme-hook="${direction}-bubble"
         >
-          <div
-            class="theme-anchor"
-            data-theme-hook="${direction}-bubble-decoration"
-            aria-hidden="true"
-          ></div>
-          <p>${escapeHtml(message.text)}</p>
+          <div class="decoration-boundary decoration-boundary--outside" aria-hidden="true">
+            <div
+              class="decoration-slot"
+              aria-hidden="true"
+              data-theme-hook="${direction}-bubble-decoration-outside"
+            ></div>
+          </div>
+          <div class="decoration-boundary decoration-boundary--inside" aria-hidden="true">
+            <div
+              class="decoration-slot"
+              aria-hidden="true"
+              data-theme-hook="${direction}-bubble-decoration-inside"
+            ></div>
+          </div>
+          <div class="content-layer content-layer--bubble">
+            <p>${escapeHtml(message.text)}</p>
+          </div>
         </div>
         <footer class="message-meta">
           <time>${escapeHtml(message.time)}</time>
@@ -467,6 +521,11 @@ function renderWorkspace({ scrollMode = "preserve" } = {}) {
 
   if (forcedState === "loading" || forcedState === "error") {
     viewport.innerHTML = statePanelMarkup(forcedState);
+    announceStatus(
+      forcedState === "loading"
+        ? "Conversation loading."
+        : "Conversation failed to load.",
+    );
     viewport.querySelector('[data-action="retry"]')?.addEventListener("click", () => {
       state.demoState = "conversation";
       demoState.value = state.demoState;
@@ -497,6 +556,13 @@ function isNearBottom() {
   return viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight <= 120;
 }
 
+function announceStatus(message) {
+  statusLiveRegion.textContent = "";
+  requestAnimationFrame(() => {
+    statusLiveRegion.textContent = message;
+  });
+}
+
 function sendMessage() {
   const text = input.value.trim();
   if (!text || input.disabled) return;
@@ -523,7 +589,7 @@ function sendMessage() {
   resizeComposer();
   renderConversationLists();
   renderWorkspace({ scrollMode: shouldFollowBottom ? "bottom" : "preserve" });
-  composerStatus.textContent = "Message sent locally.";
+  announceStatus("Message sent.");
   input.focus();
 }
 

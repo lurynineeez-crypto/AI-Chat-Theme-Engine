@@ -51,6 +51,14 @@ def open_app(page: Page, *, dev: bool = False) -> None:
         expect(page.locator("#dev-harness")).to_be_visible()
     else:
         expect(page.locator("#dev-harness")).to_be_hidden()
+        expect(page.locator("#app")).not_to_have_attribute(
+            "data-validation-decoration", ""
+        )
+    expect(page.locator("#chat-content")).not_to_have_attribute("aria-live", "")
+    live_region = page.locator("#host-status-live-region")
+    expect(live_region).to_have_attribute("aria-live", "polite")
+    expect(live_region).to_have_attribute("aria-atomic", "true")
+    assert page.locator("[aria-live]").count() == 1
     assert_no_page_overflow(page)
 
 
@@ -61,22 +69,25 @@ def assert_product_controls(page: Page, *, mobile: bool) -> None:
             page.get_by_role("button", name="Open conversation sidebar"),
             sidebar.get_by_role("button", name="Close conversation sidebar"),
             sidebar.get_by_role("button", name="New chat"),
-            sidebar.get_by_role("button", name="Account and settings"),
-            page.get_by_role("button", name="More conversation actions"),
+            sidebar.get_by_role("button", name="Account and settings unavailable"),
+            page.get_by_role("button", name="More conversation actions unavailable"),
             page.get_by_role("button", name="Send"),
         ]
     else:
         sidebar = page.locator(".sidebar--desktop")
         controls = [
             sidebar.get_by_role("button", name="New chat"),
-            sidebar.get_by_role("button", name="Account and settings"),
-            page.get_by_role("button", name="More conversation actions"),
+            sidebar.get_by_role("button", name="Account and settings unavailable"),
+            page.get_by_role("button", name="More conversation actions unavailable"),
             page.get_by_role("button", name="Send"),
         ]
 
     for control in controls:
         expect(control).to_be_visible()
         assert control.evaluate("(el) => el.tagName") == "BUTTON"
+        if "unavailable" in (control.get_attribute("aria-label") or ""):
+            expect(control).to_be_disabled()
+            expect(control).to_have_attribute("aria-disabled", "true")
         if mobile:
             assert_minimum_touch_target(control)
 
@@ -88,6 +99,12 @@ def validate_desktop_layout(page: Page, width: int, screenshot_name: str) -> Non
     expect(page.locator(".sidebar--desktop")).to_be_visible()
     expect(page.locator("#open-drawer")).to_be_hidden()
     assert_product_controls(page, mobile=False)
+    assert_decoration_stack(page.locator(".sidebar--desktop"), 0)
+    assert_decoration_stack(
+        page.locator(".sidebar--desktop .brand-area"), 8
+    )
+    assert_decoration_stack(page.locator(".chat-header"), 8)
+    assert_decoration_stack(page.locator("#composer"), 8)
 
     conversation_list = page.locator(".sidebar--desktop .conversation-list")
     list_metrics = conversation_list.evaluate(
@@ -151,6 +168,10 @@ def validate_long_conversation_and_local_interactions(page: Page) -> None:
     page.locator("#message-input").fill("Follow the bottom after sending")
     page.locator("#message-input").press("Enter")
     page.wait_for_timeout(50)
+    expect(page.locator("#host-status-live-region")).to_have_text("Message sent.")
+    assert "Follow the bottom" not in page.locator(
+        "#host-status-live-region"
+    ).text_content()
     bottom_distance = viewport.evaluate(
         "(el) => el.scrollHeight - el.scrollTop - el.clientHeight"
     )
@@ -188,14 +209,21 @@ def capture_fixture(page: Page, fixture: str, screenshot_name: str) -> None:
         expect(
             page.get_by_role("heading", name="Start a local conversation")
         ).to_be_visible()
+        assert_decoration_stack(page.locator(".empty-state"), 12)
     elif fixture == "loading":
         expect(page.locator('[data-component="loading-state"]')).to_contain_text(
             "Loading conversation"
         )
         expect(page.locator("#message-input")).to_be_disabled()
+        expect(page.locator("#host-status-live-region")).to_have_text(
+            "Conversation loading."
+        )
     elif fixture == "error":
         expect(page.get_by_role("alert")).to_contain_text(
             "Conversation could not be shown"
+        )
+        expect(page.locator("#host-status-live-region")).to_have_text(
+            "Conversation failed to load."
         )
 
     harness.evaluate("(el) => { el.hidden = true; }")
@@ -235,6 +263,181 @@ def validate_development_harness_and_states(page: Page) -> None:
     assert_no_page_overflow(page)
 
 
+def assert_decoration_stack(component: Locator, expected_overflow: float) -> None:
+    stack = component.evaluate(
+        """(el) => {
+            const outside = el.querySelector(':scope > .decoration-boundary--outside');
+            const inside = el.querySelector(':scope > .decoration-boundary--inside');
+            const content = el.querySelector(':scope > .content-layer');
+            const outsideSlot = outside.querySelector('.decoration-slot');
+            const insideSlot = inside.querySelector('.decoration-slot');
+            const rect = (node) => {
+                const value = node.getBoundingClientRect();
+                return {
+                    left: value.left,
+                    top: value.top,
+                    right: value.right,
+                    bottom: value.bottom,
+                    width: value.width,
+                    height: value.height,
+                };
+            };
+            return {
+                component: rect(el),
+                outside: rect(outside),
+                inside: rect(inside),
+                outsideZ: Number(getComputedStyle(outside).zIndex),
+                insideZ: Number(getComputedStyle(inside).zIndex),
+                contentZ: Number(getComputedStyle(content).zIndex),
+                outsideOverflow: getComputedStyle(outside).overflow,
+                insideOverflow: getComputedStyle(inside).overflow,
+                outsidePointer: getComputedStyle(outside).pointerEvents,
+                insidePointer: getComputedStyle(inside).pointerEvents,
+                outsideSlotPointer: getComputedStyle(outsideSlot).pointerEvents,
+                insideSlotPointer: getComputedStyle(insideSlot).pointerEvents,
+                outsideHidden: outside.getAttribute('aria-hidden'),
+                insideHidden: inside.getAttribute('aria-hidden'),
+                outsideSlotHidden: outsideSlot.getAttribute('aria-hidden'),
+                insideSlotHidden: insideSlot.getAttribute('aria-hidden'),
+            };
+        }"""
+    )
+    assert stack["contentZ"] > stack["insideZ"] > stack["outsideZ"]
+    assert stack["insideOverflow"] == "hidden"
+    assert stack["outsideOverflow"] == "hidden"
+    assert stack["outsidePointer"] == "none"
+    assert stack["insidePointer"] == "none"
+    assert stack["outsideSlotPointer"] == "none"
+    assert stack["insideSlotPointer"] == "none"
+    assert stack["outsideHidden"] == "true"
+    assert stack["insideHidden"] == "true"
+    assert stack["outsideSlotHidden"] == "true"
+    assert stack["insideSlotHidden"] == "true"
+
+    component_rect = stack["component"]
+    inside_rect = stack["inside"]
+    outside_rect = stack["outside"]
+    assert abs(inside_rect["width"] - component_rect["width"]) <= 2
+    assert abs(inside_rect["height"] - component_rect["height"]) <= 2
+    assert inside_rect["left"] >= component_rect["left"]
+    assert inside_rect["top"] >= component_rect["top"]
+    assert inside_rect["right"] <= component_rect["right"]
+    assert inside_rect["bottom"] <= component_rect["bottom"]
+    assert abs(component_rect["left"] - outside_rect["left"] - expected_overflow) <= 2
+    assert abs(component_rect["top"] - outside_rect["top"] - expected_overflow) <= 2
+    assert abs(outside_rect["right"] - component_rect["right"] - expected_overflow) <= 2
+    assert abs(outside_rect["bottom"] - component_rect["bottom"] - expected_overflow) <= 2
+
+
+def assert_marker_does_not_receive_pointer(page: Page, marker: Locator) -> None:
+    box = marker.bounding_box()
+    assert box is not None
+    point = {"x": box["x"] + box["width"] / 2, "y": box["y"] + box["height"] / 2}
+    hit_classes = page.evaluate(
+        """({x, y}) => {
+            const hit = document.elementFromPoint(x, y);
+            return hit ? hit.className : '';
+        }""",
+        point,
+    )
+    assert "decoration-slot" not in str(hit_classes)
+    assert "decoration-boundary" not in str(hit_classes)
+
+
+def validate_decoration_contract(page: Page) -> None:
+    page.set_viewport_size({"width": 1200, "height": 900})
+    open_app(page)
+    production_sizes = {
+        "incoming": page.locator('[data-component="incoming-message"]').first.bounding_box(),
+        "outgoing": page.locator('[data-component="outgoing-message"]').first.bounding_box(),
+        "avatar": page.locator(".avatar-frame").first.bounding_box(),
+    }
+
+    fixtures = [
+        (
+            "bubble-inside",
+            page.locator('[data-component="incoming-message"]').first,
+            '[data-theme-hook="incoming-bubble-decoration-inside"]',
+            "incoming",
+            12,
+            "decoration-bubble-inside-1200x900.png",
+        ),
+        (
+            "bubble-outside",
+            page.locator('[data-component="outgoing-message"]').first,
+            '[data-theme-hook="outgoing-bubble-decoration-outside"]',
+            "outgoing",
+            12,
+            "decoration-bubble-outside-1200x900.png",
+        ),
+        (
+            "avatar-outside",
+            page.locator(".avatar-frame").first,
+            '[data-theme-hook="avatar-frame-decoration-outside"]',
+            "avatar",
+            8,
+            "decoration-avatar-outside-1200x900.png",
+        ),
+    ]
+
+    for fixture, component, marker_selector, size_key, overflow, screenshot in fixtures:
+        page.goto(f"{BASE_URL}/?dev=1&decorations={fixture}")
+        page.wait_for_load_state("networkidle")
+        expect(page.locator("#app")).to_have_attribute(
+            "data-validation-decoration", fixture
+        )
+        page.locator("#dev-harness").evaluate("(el) => { el.hidden = true; }")
+        component = (
+            page.locator(".avatar-frame").first
+            if size_key == "avatar"
+            else page.locator(
+                f'[data-component="{size_key}-message"]'
+            ).first
+        )
+        assert_decoration_stack(component, overflow)
+
+        fixture_box = component.bounding_box()
+        baseline_box = production_sizes[size_key]
+        assert fixture_box is not None and baseline_box is not None
+        assert abs(fixture_box["width"] - baseline_box["width"]) <= 1
+        assert abs(fixture_box["height"] - baseline_box["height"]) <= 1
+
+        marker = component.locator(marker_selector)
+        expect(marker).to_be_visible()
+        assert_marker_does_not_receive_pointer(page, marker)
+
+        marker_box = marker.bounding_box()
+        assert marker_box is not None
+        if fixture == "bubble-inside":
+            assert marker_box["x"] >= fixture_box["x"]
+            assert marker_box["y"] >= fixture_box["y"]
+            assert marker_box["x"] + marker_box["width"] <= (
+                fixture_box["x"] + fixture_box["width"]
+            )
+            assert marker_box["y"] + marker_box["height"] <= (
+                fixture_box["y"] + fixture_box["height"]
+            )
+        else:
+            extends_outside = (
+                marker_box["x"] < fixture_box["x"]
+                or marker_box["y"] < fixture_box["y"]
+                or marker_box["x"] + marker_box["width"]
+                > fixture_box["x"] + fixture_box["width"]
+                or marker_box["y"] + marker_box["height"]
+                > fixture_box["y"] + fixture_box["height"]
+            )
+            assert extends_outside
+
+        assert_no_page_overflow(page)
+        page.screenshot(path=str(OUTPUT_DIR / screenshot), full_page=False)
+
+    page.goto(BASE_URL)
+    page.wait_for_load_state("networkidle")
+    expect(page.locator("#app")).not_to_have_attribute(
+        "data-validation-decoration", ""
+    )
+
+
 def validate_mobile(page: Page) -> None:
     page.set_viewport_size({"width": 390, "height": 844})
     open_app(page)
@@ -253,11 +456,11 @@ def validate_mobile(page: Page) -> None:
     expect(page.get_by_role("button", name="Close conversation sidebar")).to_be_focused()
     assert_product_controls(page, mobile=True)
 
-    settings = page.locator("#mobile-drawer").get_by_role(
-        "button", name="Account and settings"
-    )
-    settings.focus()
-    settings.press("Tab")
+    last_conversation = page.locator(
+        '#mobile-drawer [data-role="conversation-list"] [data-conversation-id]'
+    ).last
+    last_conversation.focus()
+    last_conversation.press("Tab")
     expect(page.get_by_role("button", name="Close conversation sidebar")).to_be_focused()
 
     page.wait_for_timeout(250)
@@ -317,6 +520,7 @@ def main() -> None:
         )
         validate_long_conversation_and_local_interactions(page)
         validate_development_harness_and_states(page)
+        validate_decoration_contract(page)
         validate_mobile(page)
 
         browser.close()

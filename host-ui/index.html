@@ -19,11 +19,13 @@
       data-theme-hook="application-background"
       data-appearance="light"
     >
-      <div
-        class="theme-anchor theme-anchor--application"
-        data-theme-hook="application-decoration"
-        aria-hidden="true"
-      ></div>
+      <div class="decoration-boundary decoration-boundary--inside" aria-hidden="true">
+        <div
+          class="decoration-slot"
+          aria-hidden="true"
+          data-theme-hook="application-decoration-inside"
+        ></div>
+      </div>
 
       <aside
         class="sidebar sidebar--desktop"
@@ -31,7 +33,21 @@
         data-theme-hook="sidebar"
         aria-label="Conversation sidebar"
       >
-        <div data-sidebar-content></div>
+        <div class="decoration-boundary decoration-boundary--outside" aria-hidden="true">
+          <div
+            class="decoration-slot"
+            aria-hidden="true"
+            data-theme-hook="sidebar-decoration-outside"
+          ></div>
+        </div>
+        <div class="decoration-boundary decoration-boundary--inside" aria-hidden="true">
+          <div
+            class="decoration-slot"
+            aria-hidden="true"
+            data-theme-hook="sidebar-decoration-inside"
+          ></div>
+        </div>
+        <div class="content-layer" data-sidebar-content></div>
       </aside>
 
       <main
@@ -44,39 +60,52 @@
           data-component="chat-header"
           data-theme-hook="chat-header"
         >
-          <div
-            class="theme-anchor theme-anchor--header"
-            data-theme-hook="chat-header-decoration"
-            aria-hidden="true"
-          ></div>
-          <button
-            id="open-drawer"
-            class="icon-button mobile-sidebar-trigger"
-            type="button"
-            aria-label="Open conversation sidebar"
-            aria-controls="mobile-drawer"
-            aria-expanded="false"
-            data-component="mobile-sidebar-trigger"
-          >
-            <span aria-hidden="true">☰</span>
-          </button>
-          <div class="conversation-identity">
-            <p class="eyebrow">Current conversation</p>
-            <h1 id="conversation-title" class="conversation-title">Conversation</h1>
+          <div class="decoration-boundary decoration-boundary--outside" aria-hidden="true">
+            <div
+              class="decoration-slot"
+              aria-hidden="true"
+              data-theme-hook="chat-header-decoration-outside"
+            ></div>
           </div>
-          <div
-            class="header-actions"
-            data-component="header-actions"
-            data-theme-hook="header-actions"
-          >
+          <div class="decoration-boundary decoration-boundary--inside" aria-hidden="true">
+            <div
+              class="decoration-slot"
+              aria-hidden="true"
+              data-theme-hook="chat-header-decoration-inside"
+            ></div>
+          </div>
+          <div class="content-layer content-layer--header">
             <button
-              class="icon-button"
+              id="open-drawer"
+              class="icon-button mobile-sidebar-trigger"
               type="button"
-              aria-label="More conversation actions"
-              title="More conversation actions"
+              aria-label="Open conversation sidebar"
+              aria-controls="mobile-drawer"
+              aria-expanded="false"
+              data-component="mobile-sidebar-trigger"
             >
-              <span aria-hidden="true">•••</span>
+              <span aria-hidden="true">☰</span>
             </button>
+            <div class="conversation-identity">
+              <p class="eyebrow">Current conversation</p>
+              <h1 id="conversation-title" class="conversation-title">Conversation</h1>
+            </div>
+            <div
+              class="header-actions"
+              data-component="header-actions"
+              data-theme-hook="header-actions"
+            >
+              <button
+                class="icon-button"
+                type="button"
+                aria-label="More conversation actions unavailable"
+                title="Unavailable in the structural prototype"
+                aria-disabled="true"
+                disabled
+              >
+                <span aria-hidden="true">•••</span>
+              </button>
+            </div>
           </div>
         </header>
 
@@ -84,7 +113,6 @@
           id="chat-content"
           class="chat-content"
           aria-label="Conversation content"
-          aria-live="polite"
         >
           <div
             id="message-viewport"
@@ -101,35 +129,52 @@
           data-component="composer"
           data-theme-hook="composer"
         >
-          <div
-            class="theme-anchor theme-anchor--composer"
-            data-theme-hook="composer-decoration"
-            aria-hidden="true"
-          ></div>
-          <label class="sr-only" for="message-input">Message</label>
-          <textarea
-            id="message-input"
-            class="message-input"
-            data-component="text-input"
-            data-theme-hook="composer-input"
-            rows="1"
-            placeholder="Write a message"
-            aria-describedby="composer-hint composer-status"
-          ></textarea>
-          <button
-            id="send-button"
-            class="send-button"
-            data-component="primary-send-button"
-            data-theme-hook="primary-send-button"
-            type="submit"
-          >
-            Send
-          </button>
-          <p id="composer-hint" class="composer-hint">
-            Enter to send · Shift+Enter for a new line
-          </p>
-          <p id="composer-status" class="sr-only" role="status" aria-live="polite"></p>
+          <div class="decoration-boundary decoration-boundary--outside" aria-hidden="true">
+            <div
+              class="decoration-slot"
+              aria-hidden="true"
+              data-theme-hook="composer-decoration-outside"
+            ></div>
+          </div>
+          <div class="decoration-boundary decoration-boundary--inside" aria-hidden="true">
+            <div
+              class="decoration-slot"
+              aria-hidden="true"
+              data-theme-hook="composer-decoration-inside"
+            ></div>
+          </div>
+          <div class="content-layer content-layer--composer">
+            <label class="sr-only" for="message-input">Message</label>
+            <textarea
+              id="message-input"
+              class="message-input"
+              data-component="text-input"
+              data-theme-hook="composer-input"
+              rows="1"
+              placeholder="Write a message"
+              aria-describedby="composer-hint"
+            ></textarea>
+            <button
+              id="send-button"
+              class="send-button"
+              data-component="primary-send-button"
+              data-theme-hook="primary-send-button"
+              type="submit"
+            >
+              Send
+            </button>
+            <p id="composer-hint" class="composer-hint">
+              Enter to send · Shift+Enter for a new line
+            </p>
+          </div>
         </form>
+        <p
+          id="host-status-live-region"
+          class="sr-only"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        ></p>
       </main>
 
       <div
@@ -156,13 +201,29 @@
           aria-hidden="true"
           tabindex="-1"
         >
-          <div data-sidebar-content></div>
+          <div class="decoration-boundary decoration-boundary--outside" aria-hidden="true">
+            <div
+              class="decoration-slot"
+              aria-hidden="true"
+              data-theme-hook="sidebar-decoration-outside"
+            ></div>
+          </div>
+          <div class="decoration-boundary decoration-boundary--inside" aria-hidden="true">
+            <div
+              class="decoration-slot"
+              aria-hidden="true"
+              data-theme-hook="sidebar-decoration-inside"
+            ></div>
+          </div>
+          <div class="content-layer" data-sidebar-content></div>
         </aside>
-        <div
-          class="theme-anchor theme-anchor--overlay"
-          data-theme-hook="global-overlay-decoration"
-          aria-hidden="true"
-        ></div>
+        <div class="decoration-boundary decoration-boundary--inside" aria-hidden="true">
+          <div
+            class="decoration-slot"
+            aria-hidden="true"
+            data-theme-hook="global-overlay-decoration-inside"
+          ></div>
+        </div>
         <div id="menu-root" data-component="menu-root"></div>
         <div id="dialog-root" data-component="dialog-root"></div>
       </div>

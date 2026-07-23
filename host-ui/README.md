@@ -41,3 +41,6 @@ The validation script uses Python Playwright and headless Chromium. It covers
 the required desktop and mobile sizes, local interactions, overflow ownership,
 fixture states, drawer focus behavior, touch targets, and reduced motion. It
 writes review screenshots to `host-ui/validation/`.
+
+The Host-owned inside/outside decoration boundaries are specified in
+[`DECORATION_LAYER_CONTRACT.md`](./DECORATION_LAYER_CONTRACT.md).

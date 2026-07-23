@@ -25,7 +25,8 @@
   --backdrop: rgb(16 24 32 / 48%);
   --shadow: 0 1px 2px rgb(18 24 30 / 8%);
   --z-base: 0;
-  --z-content-decoration: 1;
+  --z-decoration-outside: 0;
+  --z-decoration-inside: 1;
   --z-content: 2;
   --z-overlay: 20;
   --z-drawer: 30;
@@ -119,26 +120,39 @@ textarea:disabled {
   --backdrop: rgb(0 0 0 / 62%);
 }
 
-.theme-anchor {
+.decoration-boundary {
   position: absolute;
-  z-index: var(--z-content-decoration);
-  inset: 0;
-  overflow: hidden;
   pointer-events: none;
 }
 
-.theme-anchor--application,
-.theme-anchor--overlay {
-  inset: 0;
+.decoration-boundary--outside {
+  z-index: var(--z-decoration-outside);
+  inset: calc(-1 * var(--decoration-overflow, 0px));
+  overflow: hidden;
 }
 
-.theme-anchor--header,
-.theme-anchor--composer {
+.decoration-boundary--inside {
+  z-index: var(--z-decoration-inside);
   inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+}
+
+.decoration-slot {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.content-layer {
+  position: relative;
+  z-index: var(--z-content);
 }
 
 .sidebar {
+  --decoration-overflow: 0px;
   position: relative;
+  isolation: isolate;
   display: flex;
   min-height: 0;
   overflow: hidden;
@@ -161,15 +175,15 @@ textarea:disabled {
 }
 
 .brand-area {
+  --decoration-overflow: 0.5rem;
   position: relative;
+  isolation: isolate;
   flex: 0 0 auto;
   padding: 1rem;
   border-bottom: 1px solid var(--border);
 }
 
 .brand-content {
-  position: relative;
-  z-index: var(--z-content);
   display: flex;
   align-items: center;
   min-height: 2.75rem;
@@ -344,7 +358,9 @@ textarea:disabled {
 }
 
 .chat-header {
+  --decoration-overflow: 0.5rem;
   position: relative;
+  isolation: isolate;
   display: flex;
   min-width: 0;
   min-height: calc(4.25rem + env(safe-area-inset-top));
@@ -354,6 +370,14 @@ textarea:disabled {
     0.75rem max(1rem, env(safe-area-inset-left));
   border-bottom: 1px solid var(--border);
   background: var(--surface-panel);
+}
+
+.content-layer--header {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  gap: 0.75rem;
 }
 
 .icon-button.mobile-sidebar-trigger {
@@ -438,13 +462,14 @@ textarea:disabled {
 }
 
 .avatar-frame {
+  --decoration-overflow: 0.5rem;
   position: relative;
+  isolation: isolate;
   display: grid;
   width: 2rem;
   height: 2rem;
   flex: 0 0 auto;
   place-items: center;
-  overflow: hidden;
   border: 1px solid var(--border);
   border-radius: 50%;
   background: var(--surface-panel);
@@ -453,13 +478,22 @@ textarea:disabled {
   font-weight: 700;
 }
 
+.content-layer--avatar {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+}
+
 .message-body {
   min-width: 0;
   max-width: min(75%, 40rem);
 }
 
 .bubble {
+  --decoration-overflow: 0.75rem;
   position: relative;
+  isolation: isolate;
   max-width: 100%;
   border: 1px solid var(--border);
   border-radius: 0.75rem;
@@ -468,6 +502,10 @@ textarea:disabled {
   padding: 0.75rem 0.875rem;
   overflow-wrap: anywhere;
   word-break: break-word;
+}
+
+.content-layer--bubble {
+  min-width: 0;
 }
 
 .message-group--outgoing .bubble {
@@ -497,6 +535,9 @@ textarea:disabled {
 }
 
 .state-panel {
+  --decoration-overflow: 0.75rem;
+  position: relative;
+  isolation: isolate;
   display: grid;
   width: min(calc(100% - 2rem), 34rem);
   min-height: 15rem;
@@ -506,6 +547,13 @@ textarea:disabled {
   gap: 0.75rem;
   padding: 2rem;
   text-align: center;
+}
+
+.content-layer--state {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 0.75rem;
 }
 
 .state-panel h2,
@@ -570,13 +618,18 @@ textarea:disabled {
 }
 
 .composer {
+  --decoration-overflow: 0.5rem;
   position: relative;
-  display: grid;
+  isolation: isolate;
   width: min(100%, calc(var(--content-width) + 2rem));
   min-width: 0;
+  margin: 0 auto;
+}
+
+.content-layer--composer {
+  display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 0.5rem 0.75rem;
-  margin: 0 auto;
   padding: 0.875rem max(1rem, env(safe-area-inset-right))
     calc(0.875rem + env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
 }
@@ -616,6 +669,36 @@ textarea:disabled {
   margin: 0;
   color: var(--text-muted);
   font-size: 0.6875rem;
+}
+
+.app-shell[data-validation-decoration="bubble-inside"]
+  [data-theme-hook="incoming-bubble-decoration-inside"] {
+  inset: 0.375rem auto auto 0.375rem;
+  width: 3.25rem;
+  height: 1.125rem;
+  border: 2px solid #8a4b08;
+  border-radius: 0.25rem;
+  background: rgb(245 158 11 / 45%);
+}
+
+.app-shell[data-validation-decoration="bubble-outside"]
+  [data-theme-hook="outgoing-bubble-decoration-outside"] {
+  inset: 0 0 auto auto;
+  width: 3.25rem;
+  height: 1.5rem;
+  border: 2px solid #075985;
+  border-radius: 0.25rem;
+  background: rgb(14 165 233 / 48%);
+}
+
+.app-shell[data-validation-decoration="avatar-outside"]
+  [data-theme-hook="avatar-frame-decoration-outside"] {
+  inset: 0 0 auto auto;
+  width: 1.125rem;
+  height: 1.125rem;
+  border: 2px solid #7e22ce;
+  border-radius: 50%;
+  background: rgb(192 132 252 / 62%);
 }
 
 .overlay-root {
@@ -750,7 +833,7 @@ textarea:disabled {
     max-width: calc(100% - 2.625rem);
   }
 
-  .composer {
+  .content-layer--composer {
     padding-top: 0.625rem;
   }
 
