@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <meta
+      name="description"
+      content="Neutral structural prototype for the AI Chat Theme Engine Host UI."
+    />
+    <title>Host UI structural prototype</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div
+      id="app"
+      class="app-shell"
+      data-component="application-shell"
+      data-theme-hook="application-background"
+      data-appearance="light"
+    >
+      <div
+        class="theme-anchor theme-anchor--application"
+        data-theme-hook="application-decoration"
+        aria-hidden="true"
+      ></div>
+
+      <aside
+        class="sidebar sidebar--desktop"
+        data-component="sidebar"
+        data-theme-hook="sidebar"
+        aria-label="Conversation sidebar"
+      >
+        <div data-sidebar-content></div>
+      </aside>
+
+      <main
+        class="main-workspace"
+        data-component="main-workspace"
+        data-theme-hook="main-workspace"
+      >
+        <header
+          class="chat-header"
+          data-component="chat-header"
+          data-theme-hook="chat-header"
+        >
+          <div
+            class="theme-anchor theme-anchor--header"
+            data-theme-hook="chat-header-decoration"
+            aria-hidden="true"
+          ></div>
+          <button
+            id="open-drawer"
+            class="icon-button mobile-sidebar-trigger"
+            type="button"
+            aria-label="Open conversation sidebar"
+            aria-controls="mobile-drawer"
+            aria-expanded="false"
+            data-component="mobile-sidebar-trigger"
+          >
+            <span aria-hidden="true">☰</span>
+          </button>
+          <div class="conversation-identity">
+            <p class="eyebrow">Current conversation</p>
+            <h1 id="conversation-title" class="conversation-title">Conversation</h1>
+          </div>
+          <div
+            class="header-actions"
+            data-component="header-actions"
+            data-theme-hook="header-actions"
+          >
+            <label class="state-control">
+              <span>Demo state</span>
+              <select id="demo-state" aria-label="Choose a demo application state">
+                <option value="conversation">Conversation</option>
+                <option value="empty">Empty</option>
+                <option value="loading">Loading</option>
+                <option value="error">Error</option>
+                <option value="disabled">Disabled composer</option>
+              </select>
+            </label>
+            <button
+              id="appearance-toggle"
+              class="icon-button"
+              type="button"
+              aria-label="Use dark neutral appearance"
+              title="Toggle neutral appearance"
+            >
+              <span aria-hidden="true">◐</span>
+            </button>
+            <button
+              class="icon-button"
+              type="button"
+              aria-label="More conversation actions"
+              title="More conversation actions"
+            >
+              <span aria-hidden="true">•••</span>
+            </button>
+          </div>
+        </header>
+
+        <section
+          id="chat-content"
+          class="chat-content"
+          aria-label="Conversation content"
+          aria-live="polite"
+        >
+          <div
+            id="message-viewport"
+            class="message-viewport"
+            data-component="message-viewport"
+            data-theme-hook="message-viewport"
+            tabindex="0"
+          ></div>
+        </section>
+
+        <form
+          id="composer"
+          class="composer"
+          data-component="composer"
+          data-theme-hook="composer"
+        >
+          <div
+            class="theme-anchor theme-anchor--composer"
+            data-theme-hook="composer-decoration"
+            aria-hidden="true"
+          ></div>
+          <label class="sr-only" for="message-input">Message</label>
+          <textarea
+            id="message-input"
+            class="message-input"
+            data-component="text-input"
+            data-theme-hook="composer-input"
+            rows="1"
+            placeholder="Write a message"
+            aria-describedby="composer-hint composer-status"
+          ></textarea>
+          <button
+            id="send-button"
+            class="send-button"
+            data-component="primary-send-button"
+            data-theme-hook="primary-send-button"
+            type="submit"
+          >
+            Send
+          </button>
+          <p id="composer-hint" class="composer-hint">
+            Enter to send · Shift+Enter for a new line
+          </p>
+          <p id="composer-status" class="sr-only" role="status" aria-live="polite"></p>
+        </form>
+      </main>
+
+      <div
+        id="overlay-root"
+        class="overlay-root"
+        data-component="overlay-root"
+        data-theme-hook="global-overlay"
+      >
+        <div
+          id="drawer-backdrop"
+          class="drawer-backdrop"
+          data-component="mobile-drawer-backdrop"
+          data-theme-hook="mobile-drawer-backdrop"
+          aria-hidden="true"
+        ></div>
+        <aside
+          id="mobile-drawer"
+          class="sidebar sidebar--drawer"
+          data-component="mobile-drawer"
+          data-theme-hook="sidebar"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Conversation sidebar"
+          aria-hidden="true"
+          tabindex="-1"
+        >
+          <div data-sidebar-content></div>
+        </aside>
+        <div
+          class="theme-anchor theme-anchor--overlay"
+          data-theme-hook="global-overlay-decoration"
+          aria-hidden="true"
+        ></div>
+        <div id="menu-root" data-component="menu-root"></div>
+        <div id="dialog-root" data-component="dialog-root"></div>
+      </div>
+    </div>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
