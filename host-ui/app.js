@@ -136,6 +136,12 @@ const appearanceToggle = document.querySelector("#appearance-toggle");
 const openDrawerButton = document.querySelector("#open-drawer");
 const drawer = document.querySelector("#mobile-drawer");
 const backdrop = document.querySelector("#drawer-backdrop");
+const devHarness = document.querySelector("#dev-harness");
+const devMode = new URLSearchParams(window.location.search).get("dev") === "1";
+
+if (devMode) {
+  devHarness.hidden = false;
+}
 
 const activeConversation = () =>
   state.conversations.find((conversation) => conversation.id === state.activeId);
@@ -604,7 +610,9 @@ appearanceToggle.addEventListener("click", () => {
   app.dataset.appearance = dark ? "dark" : "light";
   appearanceToggle.setAttribute(
     "aria-label",
-    dark ? "Use light neutral appearance" : "Use dark neutral appearance",
+    dark
+      ? "Use light neutral QA appearance"
+      : "Use dark neutral QA appearance",
   );
 });
 

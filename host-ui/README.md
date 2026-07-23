@@ -19,9 +19,13 @@ module.
 
 ## Development fixtures
 
-Use the **Demo state** control in the chat header to show the conversation,
-empty, loading, recoverable error, and disabled-composer states. The long
-conversation and long-title fixtures are available in the sidebar.
+The production Host renders without QA controls. Open
+<http://127.0.0.1:4173/?dev=1> to expose the separate development harness
+outside the Host application shell. It can select the conversation, empty,
+loading, recoverable-error, and disabled-composer fixtures or toggle the
+neutral QA appearance.
+
+The long conversation and long-title fixtures are available in the sidebar.
 
 All data and interactions are in memory and reset on page reload.
 

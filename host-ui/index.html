@@ -69,25 +69,6 @@
             data-component="header-actions"
             data-theme-hook="header-actions"
           >
-            <label class="state-control">
-              <span>Demo state</span>
-              <select id="demo-state" aria-label="Choose a demo application state">
-                <option value="conversation">Conversation</option>
-                <option value="empty">Empty</option>
-                <option value="loading">Loading</option>
-                <option value="error">Error</option>
-                <option value="disabled">Disabled composer</option>
-              </select>
-            </label>
-            <button
-              id="appearance-toggle"
-              class="icon-button"
-              type="button"
-              aria-label="Use dark neutral appearance"
-              title="Toggle neutral appearance"
-            >
-              <span aria-hidden="true">◐</span>
-            </button>
             <button
               class="icon-button"
               type="button"
@@ -186,6 +167,34 @@
         <div id="dialog-root" data-component="dialog-root"></div>
       </div>
     </div>
+
+    <aside
+      id="dev-harness"
+      class="dev-harness"
+      data-component="development-harness"
+      aria-label="Development harness"
+      hidden
+    >
+      <p class="dev-harness__title">Development harness</p>
+      <label class="dev-control">
+        <span>Workspace fixture</span>
+        <select id="demo-state" aria-label="Choose a workspace fixture">
+          <option value="conversation">Conversation</option>
+          <option value="empty">Empty</option>
+          <option value="loading">Loading</option>
+          <option value="error">Error</option>
+          <option value="disabled">Disabled composer</option>
+        </select>
+      </label>
+      <button
+        id="appearance-toggle"
+        class="dev-appearance-button"
+        type="button"
+        aria-label="Use dark neutral QA appearance"
+      >
+        Toggle neutral QA appearance
+      </button>
+    </aside>
 
     <script type="module" src="./app.js"></script>
   </body>
